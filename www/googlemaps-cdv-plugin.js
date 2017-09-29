@@ -291,11 +291,15 @@ if (!cordova) {
             }
             rect.bottom = rect.top + rect.height;
           }
+
+          var clickable = element.getAttribute("data-clickable");
+
           // Stores dom bounds and depth
           domPositions[elemId] = {
             size: rect,
             depth: depth,
-            zIndex: zIndex
+            zIndex: zIndex,
+            clickable: clickable ? clickable.toLowerCase() !== "false" : true
           };
           parentRect = rect;
           parentRect.elemId = elemId;
@@ -415,37 +419,16 @@ if (!cordova) {
       });
 
       //-----------------------------------------------------------------
-      // Ignore the elements that their z-index is smaller than map div
+      // Ignore elements whose z-index is less than the min map's depth
+      // OR those that are not clickable
       //-----------------------------------------------------------------
-      var quickfilter = function(list, head, tail) {
-        var i = head, j = tail;
-        var leftRight = true;
-        while(i < j) {
-          if (leftRight) {
-            if (domPositions[list[j]].depth < minMapDepth) {
-              list[i] = list[j];
-              i++;
-              leftRight = false;
-            } else {
-              j--;
-            }
-          } else {
-            if (domPositions[list[i]].depth >= minMapDepth) {
-              list[j] = list[i];
-              j--;
-              leftRight = true;
-            } else {
-              i++;
-            }
-          }
-        }
-        list.splice(0, j);
-      };
-      var list = Object.keys(domPositions);
-      quickfilter(list, 0, list.length - 1);
+
       var finalDomPositions = {};
-      list.forEach(function(domId) {
-        finalDomPositions[domId] = domPositions[domId];
+      Object.keys(domPositions).forEach(function(domId) {
+        let node = domPositions[domId];
+        if (node.depth >= minMapDepth && node.clickable) {
+          finalDomPositions[domId] = node;
+        }
       });
 
       //-----------------------------------------------------------------
